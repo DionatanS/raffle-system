@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { RaffleStatus } from "@/types/raffle";
 import { getRaffleStatus } from "@/services/raffleService";
+import { supabase } from "@/lib/supabase";
 
 export function useRaffleStatus() {
   const [status, setStatus] = useState<RaffleStatus | null>(null);
@@ -21,8 +22,18 @@ export function useRaffleStatus() {
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 2000);
-    return () => clearInterval(interval);
+
+    // Escuta eventos de broadcast "data-changed" no canal raffle-live
+    const channel = supabase
+      .channel("raffle-live")
+      .on("broadcast", { event: "data-changed" }, () => {
+        refresh();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [refresh]);
 
   return { status, loading, refresh };

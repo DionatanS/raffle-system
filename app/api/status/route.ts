@@ -3,9 +3,15 @@ import pool from "@/lib/db";
 import { RaffleStatus } from "@/types/raffle";
 
 export async function GET() {
+  const debug = {
+    DATABASE_URL: process.env.DATABASE_URL ? "definida" : "UNDEFINED",
+    RH_USER: process.env.RH_USER ? "definida" : "UNDEFINED",
+    RH_PASS: process.env.RH_PASS ? "definida" : "UNDEFINED",
+  };
+
   if (!process.env.DATABASE_URL) {
     return NextResponse.json(
-      { error: "DATABASE_URL não configurada" },
+      { error: "DATABASE_URL não configurada", debug },
       { status: 500 }
     );
   }

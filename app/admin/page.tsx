@@ -7,6 +7,7 @@ import { useNumbers } from "@/hooks/useNumbers";
 import { useRaffleStatus } from "@/hooks/useRaffleStatus";
 import { useHistory } from "@/hooks/useHistory";
 import { initRaffle, cancelRaffle, getRaffleStatus } from "@/services/raffleService";
+import { notifyRaffleChanged } from "@/lib/supabase";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -65,6 +66,7 @@ export default function AdminPage() {
       await getRaffleStatus();
       setMensagem({ texto: `Sorteio criado com ${total} número${total > 1 ? "s" : ""}!`, tipo: "ok" });
       await Promise.all([refreshNumbers(), refreshStatus()]);
+      notifyRaffleChanged(); // notifica participantes em tempo real
     } catch {
       setMensagem({ texto: "Erro ao criar o sorteio. Tente novamente.", tipo: "erro" });
     } finally {
@@ -79,6 +81,7 @@ export default function AdminPage() {
       setMensagem(null);
       setConfirmandoCancelamento(false);
       await Promise.all([refreshNumbers(), refreshStatus()]);
+      notifyRaffleChanged(); // notifica participantes em tempo real
     } catch {
       setMensagem({ texto: "Erro ao cancelar o sorteio.", tipo: "erro" });
     } finally {
@@ -90,6 +93,7 @@ export default function AdminPage() {
     sorteioFeitoNaSessao.current = true;
     await draw();
     await Promise.all([refreshStatus(), refreshHistory()]);
+    notifyRaffleChanged(); // notifica participantes em tempo real
   };
 
   const handleCopiar = async () => {
@@ -237,7 +241,7 @@ export default function AdminPage() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h2 className="text-lg font-semibold">Participantes</h2>
-                  <p className="text-gray-400 text-sm mt-0.5">Atualizado a cada 2 segundos</p>
+                  <p className="text-gray-400 text-sm mt-0.5">Atualização em tempo real ⚡</p>
                 </div>
                 <div className="flex gap-3 text-sm">
                   <span className="bg-green-500/15 text-green-400 border border-green-500/20 px-3 py-1 rounded-full font-medium">

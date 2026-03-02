@@ -6,6 +6,7 @@ import { useReserveNumber } from "@/hooks/useReserveNumber";
 import { useRaffleStatus } from "@/hooks/useRaffleStatus";
 import { Modal } from "@/components/Modal";
 import { UserChoice } from "@/types/raffle";
+import { notifyRaffleChanged } from "@/lib/supabase";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -62,6 +63,7 @@ export default function SorteioPage({ params }: Props) {
       setModalAberto(false);
       setNumeroSelecionado(null);
       await refresh();
+      notifyRaffleChanged(); // notifica admin e demais clientes em tempo real
     } catch {
       setErroReserva("Este número já foi reservado. Escolha outro.");
       setModalAberto(false);
