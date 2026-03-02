@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
+import pool, { initDb } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
+  await initDb();
   const { number, name } = await request.json();
 
-  const result = db
-    .prepare(
-      `UPDATE raffle_numbers
-       SET is_reserved = 1, name = ?
-       WHERE number = ?
-       AND is_reserved = 0`
-    )
-    .run(name, number);
+  const result = await pool.query(
+    `UPDATE raffle_numbers
+     SET is_reserved = 1, name = $1
+     WHERE number = $2
+     AND is_reserved = 0`,
+    [name, number]
+  );
 
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return NextResponse.json(
       { error: "Number already reserved" },
       { status: 400 }

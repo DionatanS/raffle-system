@@ -1,28 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
+import pool, { initDb } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
+  await initDb();
   const { total } = await request.json();
 
-  db.prepare("DELETE FROM raffle_numbers").run();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM raffle_numbers");
 
-  const insert = db.prepare("INSERT INTO raffle_numbers (number) VALUES (?)");
-  const insertMany = db.transaction((count: number) => {
-    for (let i = 1; i <= count; i++) {
-      insert.run(i);
+    for (let i = 1; i <= total; i++) {
+      await client.query("INSERT INTO raffle_numbers (number) VALUES ($1)", [i]);
     }
-  });
 
-  insertMany(total);
+    await client.query(
+      `UPDATE raffle_config
+       SET status = 'active',
+           winner_number = NULL,
+           winner_name = NULL,
+           raffle_id = raffle_id + 1
+       WHERE id = 1`
+    );
 
-  db.prepare(
-    `UPDATE raffle_config
-     SET status = 'active',
-         winner_number = NULL,
-         winner_name = NULL,
-         raffle_id = raffle_id + 1
-     WHERE id = 1`
-  ).run();
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   return NextResponse.json({ success: true });
 }
