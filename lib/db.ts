@@ -3,9 +3,16 @@ import { Pool } from "pg";
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
+  max: 1,
+  idleTimeoutMillis: 0,
+  connectionTimeoutMillis: 10000,
 });
 
+let dbInitialized = false;
+
 export async function initDb() {
+  if (dbInitialized) return;
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS raffle_numbers (
       id SERIAL PRIMARY KEY,
@@ -43,6 +50,8 @@ export async function initDb() {
       "INSERT INTO raffle_config (id, status, raffle_id) VALUES (1, 'idle', 0)"
     );
   }
+
+  dbInitialized = true;
 }
 
 export default pool;

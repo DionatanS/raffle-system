@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import pool, { initDb } from "@/lib/db";
+import pool from "@/lib/db";
 import { RaffleNumber } from "@/types/raffle";
 
 export async function POST() {
-  await initDb();
-
   const { rows: reserved } = await pool.query<RaffleNumber>(
     "SELECT * FROM raffle_numbers WHERE is_reserved = 1"
   );
